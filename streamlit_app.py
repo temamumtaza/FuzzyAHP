@@ -199,13 +199,19 @@ def pairwiseComp(matrix, printComp=True):
             geoMean[i,j] = temp
 
     if(printComp): 
-        st.write("Fuzzy Geometric Mean Value: \n", geoMean, "\n")
+        # Tampilkan Fuzzy Geometric Mean Value dengan nama kolom yang deskriptif
+        geo_mean_df = pd.DataFrame(geoMean, columns=['l', 'm', 'u'])
+        st.write("**Fuzzy Geometric Mean Value:**")
+        st.dataframe(geo_mean_df.round(4), use_container_width=True)
 
     #menghitung total fuzzy geometric mean value
     geoMean_sum = np.sum(geoMean, axis=0)
 
     if(printComp): 
-        st.write("Fuzzy Geometric Mean Sum:", geoMean_sum, "\n")
+        # Tampilkan Fuzzy Geometric Mean Sum dengan format yang lebih rapi
+        geo_mean_sum_df = pd.DataFrame([geoMean_sum], columns=['l', 'm', 'u'])
+        st.write("**Fuzzy Geometric Mean Sum:**")
+        st.dataframe(geo_mean_sum_df.round(4), use_container_width=True)
 
     #menghitung weights
     weights = np.zeros(matrix_len)
@@ -214,13 +220,19 @@ def pairwiseComp(matrix, printComp=True):
         weights[i] = np.sum(geoMean[i] / geoMean_sum)
 
     if(printComp): 
-        st.write("Weights: \n", weights, "\n")
+        # Tampilkan Weights dengan format yang lebih rapi
+        weights_df = pd.DataFrame([weights], columns=[f'Alternative {i+1}' for i in range(len(weights))])
+        st.write("**Weights:**")
+        st.dataframe(weights_df.round(4), use_container_width=True)
 
     #menghitung normalized weights
     normWeights = weights / np.sum(weights)
 
     if(printComp): 
-        st.write("Normalized Weights: ", normWeights,"\n")
+        # Tampilkan Normalized Weights dengan format yang lebih rapi
+        norm_weights_df = pd.DataFrame([normWeights], columns=[f'Alternative {i+1}' for i in range(len(normWeights))])
+        st.write("**Normalized Weights:**")
+        st.dataframe(norm_weights_df.round(4), use_container_width=True)
 
     return normWeights
 
