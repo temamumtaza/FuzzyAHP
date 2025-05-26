@@ -26,14 +26,14 @@ def read_excel_file(filename, n):
 
 def fuzzy_consistency_check(matrix, printComp=True):
     """
-    Pengecekan konsistensi untuk Triangular Fuzzy Numbers (TFN) using proper fuzzy methods
+    Pengecekan konsistensi untuk Triangular Fuzzy Numbers (TFN) menggunakan metode Alpha-Cut
     
     Parameters:
     matrix: array of TFN - Matrix perbandingan berpasangan dalam format TFN [(l,m,u)]
     printComp: bool - Opsi untuk menampilkan detail perhitungan
     
     Returns:
-    dict: Contains consistency results for lower, middle, upper bounds and overall assessment
+    dict: Contains consistency results using alpha-cut method (alpha=1)
     """
     mat_len = len(matrix)
     RI = {
@@ -41,43 +41,49 @@ def fuzzy_consistency_check(matrix, printComp=True):
         6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49
     }
     
-    # Ekstrak matrix untuk lower, middle, dan upper bounds
-    lower_matrix = np.array([[tfn[0] for tfn in row] for row in matrix])
-    middle_matrix = np.array([[tfn[1] for tfn in row] for row in matrix])
-    upper_matrix = np.array([[tfn[2] for tfn in row] for row in matrix])
+    # Metode Alpha-Cut dengan alpha = 1: ambil nilai tengah (m) dari TFN (l, m, u)
+    crisp_matrix = np.array([[tfn[1] for tfn in row] for row in matrix])
     
     if printComp:
-        st.markdown("#### 🔢 **Dekomposisi Matrix TFN:**")
-        col1, col2, col3 = st.columns(3)
+        st.markdown("#### 🔢 **Transformasi TFN ke Crisp Matrix (Alpha-Cut α=1):**")
+        st.write("**Matrix TFN Original:**")
         
-        with col1:
-            st.write("**Lower Bound Matrix (L):**")
-            st.write(pd.DataFrame(lower_matrix).round(3))
+        # Tampilkan matrix TFN dalam format yang mudah dibaca
+        tfn_display = []
+        for row in matrix:
+            tfn_row = []
+            for tfn in row:
+                l, m, u = tfn
+                if l == m == u:
+                    tfn_row.append(f"{m:.0f}")
+                else:
+                    tfn_row.append(f"({l:.1f},{m:.1f},{u:.1f})")
+            tfn_display.append(tfn_row)
         
-        with col2:
-            st.write("**Middle Value Matrix (M):**")
-            st.write(pd.DataFrame(middle_matrix).round(3))
+        st.dataframe(pd.DataFrame(tfn_display), use_container_width=True)
         
-        with col3:
-            st.write("**Upper Bound Matrix (U):**")
-            st.write(pd.DataFrame(upper_matrix).round(3))
+        st.write("**Crisp Matrix (nilai tengah/median dari TFN):**")
+        st.write(pd.DataFrame(crisp_matrix).round(3))
+        
+        st.info("💡 **Alpha-Cut α=1:** Mengambil nilai tengah (m) dari setiap TFN (l,m,u) untuk transformasi ke crisp matrix")
     
-    # Hitung konsistensi untuk setiap bound
-    def calculate_consistency_for_matrix(matrix_bound, bound_name):
+    # Hitung konsistensi menggunakan crisp matrix
+    def calculate_consistency_alpha_cut():
         # Validasi matrix - pastikan tidak ada nilai negatif atau nol pada diagonal
-        if np.any(np.diag(matrix_bound) <= 0):
-            st.warning(f"⚠️ Matrix {bound_name} memiliki diagonal yang tidak valid")
+        if np.any(np.diag(crisp_matrix) <= 0):
+            if printComp:
+                st.warning("⚠️ Matrix memiliki diagonal yang tidak valid")
             return {
                 'lambda_max': mat_len,
                 'CI': 0,
                 'RI': 0,
                 'CR': 0,
-                'consistent': True  # Anggap konsisten jika matrix tidak valid
+                'consistent': True
             }
         
-        # Pastikan matrix positive definite untuk perhitungan eigenvalue yang stabil
+        # Perhitungan eigenvalue untuk crisp matrix
         try:
-            eigenvalues = np.linalg.eigvals(matrix_bound)
+            eigenvalues = np.linalg.eigvals(crisp_matrix)
             # Filter hanya eigenvalue real dan positif
             real_eigenvalues = [ev.real for ev in eigenvalues if ev.imag == 0 and ev.real > 0]
             
@@ -90,7 +96,8 @@ def fuzzy_consistency_check(matrix, printComp=True):
             lambda_max = max(lambda_max, mat_len)
             
         except np.linalg.LinAlgError:
-            st.warning(f"⚠️ Error perhitungan eigenvalue untuk matrix {bound_name}")
+            if printComp:
+                st.warning("⚠️ Error perhitungan eigenvalue untuk crisp matrix")
             lambda_max = mat_len
         
         if mat_len >= 10:
@@ -109,143 +116,64 @@ def fuzzy_consistency_check(matrix, printComp=True):
             'consistent': cr_value <= 0.1
         }
     
-    # Hitung konsistensi untuk setiap bound
-    lower_result = calculate_consistency_for_matrix(lower_matrix, "Lower")
-    middle_result = calculate_consistency_for_matrix(middle_matrix, "Middle")
-    upper_result = calculate_consistency_for_matrix(upper_matrix, "Upper")
-    
-    # Implementasi Geometric Consistency Index (GCI) untuk TFN
-    def calculate_geometric_consistency():
-        """Hitung GCI menggunakan geometric mean dari TFN"""
-        gci_values = []
-        
-        for bound_matrix, bound_name in [(lower_matrix, "Lower"), (middle_matrix, "Middle"), (upper_matrix, "Upper")]:
-            if mat_len <= 2:
-                gci_values.append(0)
-                continue
-                
-            # Hitung geometric mean untuk setiap baris
-            row_gm = []
-            for i in range(mat_len):
-                product = 1
-                for j in range(mat_len):
-                    product *= bound_matrix[i][j]
-                row_gm.append(product ** (1/mat_len))
-            
-            # Hitung GCI
-            gci_sum = 0
-            for i in range(mat_len):
-                for j in range(mat_len):
-                    if i != j:
-                        gci_sum += (np.log(bound_matrix[i][j]) - np.log(row_gm[i]) + np.log(row_gm[j])) ** 2
-            
-            gci = (1 / (2 * (mat_len - 1) * (mat_len - 2))) * gci_sum if mat_len > 2 else 0
-            gci_values.append(gci)
-        
-        return gci_values
-    
-    gci_values = calculate_geometric_consistency()
-    
-    # Fuzzy Consistency Assessment menggunakan defuzzification
-    def fuzzy_defuzzification_cr():
-        """Hitung CR menggunakan defuzzification (centroid method)"""
-        # Defuzzify menggunakan centroid method: (l + m + u) / 3
-        defuzz_matrix = np.zeros((mat_len, mat_len))
-        for i in range(mat_len):
-            for j in range(mat_len):
-                l, m, u = matrix[i][j]
-                defuzz_matrix[i][j] = (l + m + u) / 3
-        
-        eigenvalues = np.linalg.eigvals(defuzz_matrix)
-        lambda_max = max(eigenvalues.real)
-        
-        ri_value = RI[mat_len] if mat_len in RI else RI[10] if mat_len >= 10 else 0
-        ci_value = (lambda_max - mat_len) / (mat_len - 1) if mat_len > 1 else 0
-        cr_value = ci_value / ri_value if ri_value > 0 else 0
-        
-        return {
-            'lambda_max': lambda_max,
-            'CI': ci_value,
-            'RI': ri_value,
-            'CR': cr_value,
-            'consistent': cr_value <= 0.1
-        }
-    
-    defuzz_result = fuzzy_defuzzification_cr()
-    
-    # Overall consistency assessment
-    bounds_consistent = [lower_result['consistent'], middle_result['consistent'], upper_result['consistent']]
-    overall_consistent = all(bounds_consistent) or defuzz_result['consistent']
+    # Hitung konsistensi menggunakan alpha-cut
+    alpha_cut_result = calculate_consistency_alpha_cut()
     
     if printComp:
-        st.markdown("#### 📊 **Hasil Analisis Konsistensi TFN:**")
+        st.markdown("#### 📊 **Hasil Analisis Konsistensi (Alpha-Cut Method):**")
         
         # Tabel hasil konsistensi
         consistency_df = pd.DataFrame({
-            'Bound': ['Lower (L)', 'Middle (M)', 'Upper (U)', 'Defuzzified'],
-            'λ_max': [lower_result['lambda_max'], middle_result['lambda_max'], 
-                     upper_result['lambda_max'], defuzz_result['lambda_max']],
-            'CI': [lower_result['CI'], middle_result['CI'], 
-                   upper_result['CI'], defuzz_result['CI']],
-            'RI': [lower_result['RI'], middle_result['RI'], 
-                   upper_result['RI'], defuzz_result['RI']],
-            'CR': [lower_result['CR'], middle_result['CR'], 
-                   upper_result['CR'], defuzz_result['CR']],
-            'Status': ['✅ Konsisten' if lower_result['consistent'] else '❌ Tidak Konsisten',
-                      '✅ Konsisten' if middle_result['consistent'] else '❌ Tidak Konsisten',
-                      '✅ Konsisten' if upper_result['consistent'] else '❌ Tidak Konsisten',
-                      '✅ Konsisten' if defuzz_result['consistent'] else '❌ Tidak Konsisten']
+            'Metode': ['Alpha-Cut (α=1)'],
+            'λ_max': [alpha_cut_result['lambda_max']],
+            'CI': [alpha_cut_result['CI']],
+            'RI': [alpha_cut_result['RI']],
+            'CR': [alpha_cut_result['CR']],
+            'Status': ['✅ Konsisten' if alpha_cut_result['consistent'] else '❌ Tidak Konsisten']
         })
         
         st.dataframe(consistency_df.round(4), use_container_width=True)
         
-        # GCI Results
-        if any(gci > 0 for gci in gci_values):
-            st.markdown("#### 🎯 **Geometric Consistency Index (GCI):**")
-            gci_df = pd.DataFrame({
-                'Bound': ['Lower (L)', 'Middle (M)', 'Upper (U)'],
-                'GCI': gci_values,
-                'Status': ['✅ Baik' if gci <= 0.31 else '❌ Perlu Revisi' for gci in gci_values]
-            })
-            st.dataframe(gci_df.round(4), use_container_width=True)
-            st.info("💡 **Interpretasi GCI:** ≤ 0.31 = Konsistensi baik, > 0.31 = Perlu revisi")
-        
         # Overall assessment
-        st.markdown("#### 🏆 **Penilaian Konsistensi Keseluruhan:**")
+        st.markdown("#### 🏆 **Penilaian Konsistensi:**")
         
-        if overall_consistent:
+        if alpha_cut_result['consistent']:
             st.success("✅ **Matrix TFN KONSISTEN** - Dapat digunakan untuk perhitungan lanjutan")
         else:
             st.warning("⚠️ **Matrix TFN TIDAK KONSISTEN** - Disarankan untuk merevisi penilaian")
         
         # Detailed explanation
-        with st.expander("🔍 **Penjelasan Detail Metode Konsistensi TFN**"):
+        with st.expander("🔍 **Penjelasan Metode Alpha-Cut untuk Konsistensi TFN**"):
             st.write("""
-            **Metode yang Digunakan:**
+            **Metode Alpha-Cut (α=1):**
             
-            1. **Bound-wise Consistency:** Mengecek konsistensi pada setiap bound (L, M, U) secara terpisah
-            2. **Defuzzification Consistency:** Menggunakan centroid method untuk defuzzifikasi TFN
-            3. **Geometric Consistency Index (GCI):** Metode alternatif untuk penilaian konsistensi
+            1. **Transformasi TFN ke Crisp:** Menggunakan alpha-cut dengan α=1
+               - TFN (l, m, u) → m (nilai tengah/median)
+               - Memberikan representasi crisp yang deterministik dari TFN
             
-            **Kriteria Penilaian:**
-            - **CR ≤ 0.1:** Matrix konsisten
-            - **GCI ≤ 0.31:** Konsistensi geometris baik
-            - **Overall:** Matrix dianggap konsisten jika semua bound konsisten ATAU defuzzified CR ≤ 0.1
+            2. **Perhitungan Konsistensi:** Menggunakan metode AHP klasik pada crisp matrix
+               - Consistency Index (CI) = (λmax - n) / (n - 1)
+               - Consistency Ratio (CR) = CI / Random Index (RI)
+               - Kriteria: CR ≤ 0.1 = Konsisten
             
-            **Kelebihan Metode TFN:**
-            - Mempertimbangkan ketidakpastian dalam penilaian
-            - Memberikan interval kepercayaan untuk konsistensi
-            - Lebih robust terhadap variasi penilaian subjektif
+            **Kelebihan Metode Alpha-Cut:**
+            - Sederhana dan mudah dipahami
+            - Komputasi efisien 
+            - Konsisten dengan teori AHP klasik
+            - Memberikan hasil yang deterministik
+            
+            **Logic TFN yang Digunakan:**
+            - **(1,1,3):** Elemen diagonal atau sama penting
+            - **(1,3,5):** Sedikit lebih penting (diff=1)
+            - **(3,5,7):** Lebih penting (diff=2)
+            - **(5,7,9):** Sangat penting (diff=3)
+            - **(7,9,9):** Mutlak lebih penting (diff≥4)
             """)
     
     return {
-        'lower': lower_result,
-        'middle': middle_result,
-        'upper': upper_result,
-        'defuzzified': defuzz_result,
-        'gci': gci_values,
-        'overall_consistent': overall_consistent,
-        'bounds_consistent': bounds_consistent
+        'alpha_cut': alpha_cut_result,
+        'overall_consistent': alpha_cut_result['consistent'],
+        'crisp_matrix': crisp_matrix
     }
 
 def isConsistent(matrix, printComp=True):
@@ -311,20 +239,23 @@ def FAHP(crxcr, altxalt, alternativesName, printComp=True, show_criteria_matrix=
             st.write("""
             **Tujuan:** Memastikan bahwa matriks perbandingan berpasangan TFN konsisten dan dapat diandalkan.
             
-            **Metode Konsistensi TFN yang Digunakan:**
-            1. **Bound-wise Analysis:** Mengecek konsistensi pada Lower (L), Middle (M), dan Upper (U) bound secara terpisah
-            2. **Defuzzification Method:** Menggunakan centroid method [(L+M+U)/3] untuk defuzzifikasi
-            3. **Geometric Consistency Index (GCI):** Metode alternatif berbasis geometric mean
+            **Metode Alpha-Cut (α=1) yang Digunakan:**
+            1. **Transformasi TFN ke Crisp:** Menggunakan alpha-cut dengan α=1
+               - TFN (l, m, u) → m (nilai tengah/median)
+               - Memberikan representasi crisp yang deterministik dari TFN
             
-            **Kriteria Penilaian:**
-            - **CR ≤ 0.1:** Matrix konsisten untuk setiap bound
-            - **GCI ≤ 0.31:** Konsistensi geometris baik  
-            - **Overall:** Konsisten jika semua bound konsisten ATAU defuzzified CR ≤ 0.1
+            2. **Perhitungan Konsistensi:** Menggunakan metode AHP klasik pada crisp matrix
+               - Consistency Index (CI) = (λmax - n) / (n - 1)
+               - Consistency Ratio (CR) = CI / Random Index (RI)
+               - Kriteria: CR ≤ 0.1 = Konsisten
             
-            **Keunggulan Pendekatan TFN:**
-            - Mempertimbangkan ketidakpastian dalam penilaian subjektif
-            - Memberikan interval kepercayaan untuk hasil konsistensi
-            - Lebih robust dan realistis untuk pengambilan keputusan fuzzy
+            **Keunggulan Metode Alpha-Cut:**
+            - Sederhana dan mudah dipahami
+            - Komputasi efisien 
+            - Konsisten dengan teori AHP klasik
+            - Memberikan hasil yang deterministik
+            
+            **Logic TFN:** (1,1,3); (1,3,5); (3,5,7); (5,7,9); (7,9,9)
             """)
         
         st.markdown("### 📊 **Konsistensi Matrix Kriteria x Kriteria:**")
@@ -565,20 +496,20 @@ def display_criteria_pairwise_matrix(crxcr, criteriaDict):
     with st.expander("ℹ️ Penjelasan Matrix"):
         st.write("""
         **Cara membaca matrix:**
-        - Diagonal utama selalu bernilai (1, 1, 1) karena kriteria dibandingkan dengan dirinya sendiri
+        - Diagonal utama dan elemen yang sama bernilai (1, 1, 3)
         - Nilai (l, m, u) menunjukkan tingkat kepentingan kriteria baris terhadap kriteria kolom
         - l = lower bound (batas bawah)
-        - m = middle value (nilai tengah) 
+        - m = middle value (nilai tengah) - digunakan untuk alpha-cut
         - u = upper bound (batas atas)
         - Semakin besar nilai, semakin penting kriteria baris dibanding kriteria kolom
         """)
         
-        st.write("**Interpretasi nilai:**")
-        st.write("- (1, 1, 1): Sama penting")
-        st.write("- (1, 3, 5): Sedikit lebih penting")
-        st.write("- (3, 5, 7): Lebih penting")
-        st.write("- (5, 7, 9): Sangat penting")
-        st.write("- (7, 9, 9): Mutlak lebih penting")
+        st.write("**Logic TFN yang Digunakan:**")
+        st.write("- **(1, 1, 3):** Elemen diagonal atau sama penting")
+        st.write("- **(1, 3, 5):** Sedikit lebih penting (selisih nilai = 1)")
+        st.write("- **(3, 5, 7):** Lebih penting (selisih nilai = 2)")
+        st.write("- **(5, 7, 9):** Sangat penting (selisih nilai = 3)")
+        st.write("- **(7, 9, 9):** Mutlak lebih penting (selisih nilai ≥ 4)")
 
 st.title("Fuzzy AHP untuk Seleksi Keringanan UKT")
 
@@ -605,7 +536,7 @@ if file_criteria is not None and file_alternatives is not None:
             for j, (c_j, v_j) in enumerate(items):
                 if i == j or c_i == c_j or v_i == v_j:
                     # Diagonal elements atau elemen yang sama
-                    matrix[i][j] = [1, 1, 1]
+                    matrix[i][j] = [1, 1, 3]
                 else:
                     diff = abs(v_i - v_j)
                     if diff == 1:
