@@ -163,11 +163,11 @@ def fuzzy_consistency_check(matrix, printComp=True):
             - Memberikan hasil yang deterministik
             
             **Logic TFN yang Digunakan:**
-            - **(1,1,3):** Elemen diagonal atau sama penting
-            - **(1,3,5):** Sedikit lebih penting (diff=1)
-            - **(3,5,7):** Lebih penting (diff=2)
-            - **(5,7,9):** Sangat penting (diff=3)
-            - **(7,9,9):** Mutlak lebih penting (diff≥4)
+            - **(1,1,3):** Sama penting atau elemen diagonal
+            - **(1,3,5):** Sedikit lebih penting 
+            - **(3,5,7):** Lebih penting 
+            - **(5,7,9):** Sangat penting 
+            - **(7,9,9):** Mutlak lebih penting
             """)
     
     return {
@@ -278,7 +278,6 @@ def FAHP(crxcr, altxalt, alternativesName, printComp=True, show_criteria_matrix=
             - Konsisten dengan teori AHP klasik
             - Memberikan hasil yang deterministik
             
-            **Logic TFN:** (1,1,3); (1,3,5); (3,5,7); (5,7,9); (7,9,9)
             """)
         
         st.markdown("### 📊 **Konsistensi Matrix Kriteria x Kriteria:**")
