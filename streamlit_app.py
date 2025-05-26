@@ -184,7 +184,8 @@ def isConsistent(matrix, printComp=True):
     return result['overall_consistent']
 
 #Parameter: matrix = Matrix yang akan dihitung konsistensinya, printComp = opsi untuk menampilkan komputasi konsistensi matrix
-def pairwiseComp(matrix, printComp=True):
+#          labels = Array nama untuk kolom (kriteria atau alternatif)
+def pairwiseComp(matrix, printComp=True, labels=None):
     matrix_len = len(matrix)
     
     #menghitung fuzzy geometric mean value
@@ -221,7 +222,12 @@ def pairwiseComp(matrix, printComp=True):
 
     if(printComp): 
         # Tampilkan Weights dengan format yang lebih rapi
-        weights_df = pd.DataFrame([weights], columns=[f'Alternative {i+1}' for i in range(len(weights))])
+        if labels is not None:
+            column_labels = labels
+        else:
+            column_labels = [f'Item {i+1}' for i in range(len(weights))]
+        
+        weights_df = pd.DataFrame([weights], columns=column_labels)
         st.write("**Weights:**")
         st.dataframe(weights_df.round(4), use_container_width=True)
 
@@ -230,7 +236,12 @@ def pairwiseComp(matrix, printComp=True):
 
     if(printComp): 
         # Tampilkan Normalized Weights dengan format yang lebih rapi
-        norm_weights_df = pd.DataFrame([normWeights], columns=[f'Alternative {i+1}' for i in range(len(normWeights))])
+        if labels is not None:
+            column_labels = labels
+        else:
+            column_labels = [f'Item {i+1}' for i in range(len(normWeights))]
+            
+        norm_weights_df = pd.DataFrame([normWeights], columns=column_labels)
         st.write("**Normalized Weights:**")
         st.dataframe(norm_weights_df.round(4), use_container_width=True)
 
@@ -312,7 +323,7 @@ def FAHP(crxcr, altxalt, alternativesName, printComp=True, show_criteria_matrix=
         display_criteria_pairwise_matrix(crxcr, criteriaDict)
     
     # Hitung nilai pairwise comparison weight untuk criteria x criteria
-    crxcr_weights = pairwiseComp(crxcr, printComp)
+    crxcr_weights = pairwiseComp(crxcr, printComp, criteriaDict)
     
     if(printComp): 
         st.markdown("### 🎯 **Bobot Final Kriteria:**")
@@ -358,7 +369,7 @@ def FAHP(crxcr, altxalt, alternativesName, printComp=True, show_criteria_matrix=
     for i, altxalt_cr in enumerate(altxalt):
         if(printComp): 
             st.markdown(f"### 📋 **Bobot Alternatif untuk Kriteria: {criteriaDict[i]}**")
-        altxalt_weights[i] =  pairwiseComp(altxalt_cr, printComp)
+        altxalt_weights[i] =  pairwiseComp(altxalt_cr, printComp, alternativesName)
 
     # Transpose matrix altxalt_weights
     altxalt_weights = altxalt_weights.transpose(1, 0)
