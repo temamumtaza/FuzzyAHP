@@ -252,11 +252,11 @@ Proyek ini dilisensikan under [MIT License](LICENSE) - lihat file LICENSE untuk 
 
 ---
 
-## 👥 Tim Pengembang
+## 👥 Pengembang
 
 <div align="center">
 
-**Dikembangkan dengan ❤️ oleh Tim Fuzzy AHP**
+**Dikembangkan dengan ❤️ oleh Tema Mumtaza**
 
 [![GitHub](https://img.shields.io/badge/GitHub-temamumtaza-181717?style=for-the-badge&logo=github)](https://github.com/temamumtaza)
 
