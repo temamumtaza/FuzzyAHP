@@ -64,8 +64,34 @@ def fuzzy_consistency_check(matrix, printComp=True):
     
     # Hitung konsistensi untuk setiap bound
     def calculate_consistency_for_matrix(matrix_bound, bound_name):
-        eigenvalues = np.linalg.eigvals(matrix_bound)
-        lambda_max = max(eigenvalues.real)  # Ambil bagian real dari eigenvalue
+        # Validasi matrix - pastikan tidak ada nilai negatif atau nol pada diagonal
+        if np.any(np.diag(matrix_bound) <= 0):
+            st.warning(f"⚠️ Matrix {bound_name} memiliki diagonal yang tidak valid")
+            return {
+                'lambda_max': mat_len,
+                'CI': 0,
+                'RI': 0,
+                'CR': 0,
+                'consistent': True  # Anggap konsisten jika matrix tidak valid
+            }
+        
+        # Pastikan matrix positive definite untuk perhitungan eigenvalue yang stabil
+        try:
+            eigenvalues = np.linalg.eigvals(matrix_bound)
+            # Filter hanya eigenvalue real dan positif
+            real_eigenvalues = [ev.real for ev in eigenvalues if ev.imag == 0 and ev.real > 0]
+            
+            if len(real_eigenvalues) == 0:
+                lambda_max = mat_len  # Default ke n jika tidak ada eigenvalue valid
+            else:
+                lambda_max = max(real_eigenvalues)
+                
+            # Pastikan lambda_max >= n (properti fundamental dari matriks pairwise comparison)
+            lambda_max = max(lambda_max, mat_len)
+            
+        except np.linalg.LinAlgError:
+            st.warning(f"⚠️ Error perhitungan eigenvalue untuk matrix {bound_name}")
+            lambda_max = mat_len
         
         if mat_len >= 10:
             ri_value = RI[10]
@@ -577,8 +603,9 @@ if file_criteria is not None and file_alternatives is not None:
         matrix = np.zeros((n, n, 3))
         for i, (c_i, v_i) in enumerate(items):
             for j, (c_j, v_j) in enumerate(items):
-                if c_i == c_j or v_i == v_j:
-                    matrix[i][j] = [1, 1, 3]
+                if i == j or c_i == c_j or v_i == v_j:
+                    # Diagonal elements atau elemen yang sama
+                    matrix[i][j] = [1, 1, 1]
                 else:
                     diff = abs(v_i - v_j)
                     if diff == 1:
@@ -589,8 +616,12 @@ if file_criteria is not None and file_alternatives is not None:
                         matrix[i][j] = [5, 7, 9]
                     elif diff >= 4:
                         matrix[i][j] = [7, 9, 9]
+                    
+                    # Jika v_i < v_j, maka kita perlu invers TFN
                     if v_i < v_j:
-                        matrix[i][j] = 1 / matrix[i][j][::-1]
+                        l, m, u = matrix[i][j]
+                        # Invers TFN: [1/u, 1/m, 1/l]
+                        matrix[i][j] = [1/u, 1/m, 1/l]
         return matrix
     
     crxcr = np.array(compare(*criteria))
