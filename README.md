@@ -50,9 +50,14 @@ Aplikasi akan berjalan di browser pada alamat: `http://localhost:8501`
 
 - Input kriteria dan alternatif untuk proses AHP
 - Perhitungan matriks perbandingan berpasangan
+- **Tampilan Matrix Pairwise Kriteria** - Menampilkan matrix perbandingan berpasangan kriteria x kriteria dengan format Triangular Fuzzy Numbers (TFN)
+- Toggle untuk menampilkan/menyembunyikan matrix pairwise kriteria
 - Validasi konsistensi (Consistency Ratio)
+- Pengelompokan hasil berdasarkan:
+  - Alokasi persentase (dengan slider untuk mengatur kuota)
+  - Batas skor (dengan slider untuk mengatur threshold)
+- Visualisasi hasil dengan grafik pie chart interaktif
 - Export hasil ke file Excel
-- Visualisasi hasil dengan grafik interaktif
 
 ## Demo Aplikasi
 

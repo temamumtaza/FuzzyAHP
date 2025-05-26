@@ -177,6 +177,82 @@ def kelompokkan_score(Score):
     else:
         return 'Tanpa Keringanan'
 
+# Fungsi untuk menampilkan pairwise comparison matrix kriteria x kriteria
+def display_criteria_pairwise_matrix(crxcr, criteriaDict):
+    """
+    Menampilkan pairwise comparison matrix kriteria x kriteria dalam bentuk tabel yang mudah dibaca
+    
+    Parameters:
+    crxcr: numpy array - Matrix pairwise comparison kriteria x kriteria
+    criteriaDict: array - Nama-nama kriteria
+    """
+    n_criteria = len(criteriaDict)
+    
+    # Membuat dataframe untuk lower bound (nilai minimum)
+    lower_matrix = pd.DataFrame(
+        data=[[crxcr[i][j][0] for j in range(n_criteria)] for i in range(n_criteria)],
+        index=criteriaDict,
+        columns=criteriaDict
+    )
+    
+    # Membuat dataframe untuk middle value (nilai tengah)
+    middle_matrix = pd.DataFrame(
+        data=[[crxcr[i][j][1] for j in range(n_criteria)] for i in range(n_criteria)],
+        index=criteriaDict,
+        columns=criteriaDict
+    )
+    
+    # Membuat dataframe untuk upper bound (nilai maksimum)
+    upper_matrix = pd.DataFrame(
+        data=[[crxcr[i][j][2] for j in range(n_criteria)] for i in range(n_criteria)],
+        index=criteriaDict,
+        columns=criteriaDict
+    )
+    
+    # Membuat dataframe gabungan dengan format (l, m, u)
+    combined_matrix = pd.DataFrame(
+        index=criteriaDict,
+        columns=criteriaDict
+    )
+    
+    for i in range(n_criteria):
+        for j in range(n_criteria):
+            l = crxcr[i][j][0]
+            m = crxcr[i][j][1] 
+            u = crxcr[i][j][2]
+            
+            # Format angka dengan 3 desimal
+            if l == m == u:
+                combined_matrix.iloc[i, j] = f"{l:.0f}"
+            else:
+                combined_matrix.iloc[i, j] = f"({l:.3f}, {m:.3f}, {u:.3f})"
+    
+    st.subheader("📊 Pairwise Comparison Matrix Kriteria x Kriteria")
+    st.write("Matrix ini menunjukkan perbandingan tingkat kepentingan antar kriteria menggunakan Triangular Fuzzy Numbers (TFN)")
+    
+    # Tampilkan matrix gabungan
+    st.write("**Matrix Pairwise Comparison (Lower, Middle, Upper):**")
+    st.dataframe(combined_matrix, use_container_width=True)
+    
+    # Tampilkan penjelasan
+    with st.expander("ℹ️ Penjelasan Matrix"):
+        st.write("""
+        **Cara membaca matrix:**
+        - Diagonal utama selalu bernilai (1, 1, 1) karena kriteria dibandingkan dengan dirinya sendiri
+        - Nilai (l, m, u) menunjukkan tingkat kepentingan kriteria baris terhadap kriteria kolom
+        - l = lower bound (batas bawah)
+        - m = middle value (nilai tengah) 
+        - u = upper bound (batas atas)
+        - Semakin besar nilai, semakin penting kriteria baris dibanding kriteria kolom
+        """)
+        
+        st.write("**Interpretasi nilai:**")
+        st.write("- (1, 1, 1): Sama penting")
+        st.write("- (1, 3, 5): Sedikit lebih penting")
+        st.write("- (3, 5, 7): Lebih penting")
+        st.write("- (5, 7, 9): Sangat penting")
+        st.write("- (7, 9, 9): Mutlak lebih penting")
+
 st.title("Fuzzy AHP untuk Seleksi Keringanan UKT")
 
 with st.sidebar:
@@ -227,11 +303,18 @@ if file_criteria is not None and file_alternatives is not None:
 
     # Membuat checkbox untuk menampilkan perhitungan lengkap (konsistensi matrix)
     show_comp = st.checkbox("Tampilkan Penghitungan Fuzzy AHP")
+    
+    # Membuat checkbox untuk menampilkan matrix pairwise kriteria
+    show_criteria_matrix = st.checkbox("Tampilkan Matrix Pairwise Kriteria")
 
     #Memanggil fungsi FAHP dengan parameter yang telah didefinisikan sebelumnya
     #printComp di-set False agar tidak menampilkan komputasi konsistensi matrix
     output = FAHP(crxcr, altxalt, alternativesName, show_comp)
 
+    # Menampilkan matrix pairwise kriteria jika checkbox dicentang
+    if show_criteria_matrix:
+        display_criteria_pairwise_matrix(crxcr, criteriaDict)
+    
     #Menampilkan rangking alternatif dengan output dari fungsi FAHP
     st.write("\n RANGKING ALTERNATIF:\n", output)
 
