@@ -110,7 +110,8 @@ def pairwiseComp(matrix, printComp=True):
 
 #Parameter: crxcr = Pairwise comparison matrix criteria X criteria, altxalt = Pairwise comparison matrices alternatif X alternatif , 
 #       alternativesName = Nama dari setiap alternatif, printComp = opsi untuk menampilkan komputasi konsistensi matrix
-def FAHP(crxcr, altxalt, alternativesName, printComp=True):
+#       show_criteria_matrix = opsi untuk menampilkan matrix pairwise kriteria, criteriaDict = nama kriteria
+def FAHP(crxcr, altxalt, alternativesName, printComp=True, show_criteria_matrix=False, criteriaDict=None):
     
 
     # Cek konsistensi pairwise comparison matrix criteria x criteria
@@ -132,6 +133,11 @@ def FAHP(crxcr, altxalt, alternativesName, printComp=True):
     if(printComp): st.write("\n")
 
     if(printComp): st.write(f'<p style="font-size:28px">KRITERIA X KRITERIA : \n</p>', unsafe_allow_html=True)
+    
+    # Menampilkan matrix pairwise kriteria jika checkbox dicentang
+    if show_criteria_matrix and criteriaDict is not None:
+        display_criteria_pairwise_matrix(crxcr, criteriaDict)
+    
     # Hitung nilai pairwise comparison weight untuk criteria x criteria
     crxcr_weights = pairwiseComp(crxcr, printComp)
     if(printComp): st.write("criteria X criteria weights: ", crxcr_weights)
@@ -309,11 +315,7 @@ if file_criteria is not None and file_alternatives is not None:
 
     #Memanggil fungsi FAHP dengan parameter yang telah didefinisikan sebelumnya
     #printComp di-set False agar tidak menampilkan komputasi konsistensi matrix
-    output = FAHP(crxcr, altxalt, alternativesName, show_comp)
-
-    # Menampilkan matrix pairwise kriteria jika checkbox dicentang
-    if show_criteria_matrix:
-        display_criteria_pairwise_matrix(crxcr, criteriaDict)
+    output = FAHP(crxcr, altxalt, alternativesName, show_comp, show_criteria_matrix, criteriaDict)
     
     #Menampilkan rangking alternatif dengan output dari fungsi FAHP
     st.write("\n RANGKING ALTERNATIF:\n", output)
