@@ -24,48 +24,210 @@ def read_excel_file(filename, n):
 #     b64 = base64.b64encode(processed_data)
 #     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}">Download file</a>'
 
-def isConsistent(matrix, printComp=True):
+def fuzzy_consistency_check(matrix, printComp=True):
+    """
+    Pengecekan konsistensi untuk Triangular Fuzzy Numbers (TFN) using proper fuzzy methods
+    
+    Parameters:
+    matrix: array of TFN - Matrix perbandingan berpasangan dalam format TFN [(l,m,u)]
+    printComp: bool - Opsi untuk menampilkan detail perhitungan
+    
+    Returns:
+    dict: Contains consistency results for lower, middle, upper bounds and overall assessment
+    """
     mat_len = len(matrix)
     RI = {
-        1: 0.00,
-        2: 0.00,
-        3: 0.58,
-        4: 0.90,
-        5: 1.12,
-        6: 1.24,
-        7: 1.32,
-        8: 1.41,
-        9: 1.45,
-        10: 1.49
+        1: 0.00, 2: 0.00, 3: 0.58, 4: 0.90, 5: 1.12,
+        6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49
     }
-    midMatrix = np.array([m[1] for row in matrix for m in row]).reshape(mat_len, mat_len)
-    if(printComp): st.write("mid-value matrix: \n", midMatrix, "\n")
     
-    eigenvalue = np.linalg.eigvals(midMatrix)
-    lambdaMax = max(eigenvalue)
-    if(printComp): st.write("eigenvalue: ", eigenvalue)
-    if(printComp): st.write("lambdaMax: ", lambdaMax)
-    if(printComp): st.write("\n")
+    # Ekstrak matrix untuk lower, middle, dan upper bounds
+    lower_matrix = np.array([[tfn[0] for tfn in row] for row in matrix])
+    middle_matrix = np.array([[tfn[1] for tfn in row] for row in matrix])
+    upper_matrix = np.array([[tfn[2] for tfn in row] for row in matrix])
+    
+    if printComp:
+        st.markdown("#### 🔢 **Dekomposisi Matrix TFN:**")
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.write("**Lower Bound Matrix (L):**")
+            st.write(pd.DataFrame(lower_matrix).round(3))
+        
+        with col2:
+            st.write("**Middle Value Matrix (M):**")
+            st.write(pd.DataFrame(middle_matrix).round(3))
+        
+        with col3:
+            st.write("**Upper Bound Matrix (U):**")
+            st.write(pd.DataFrame(upper_matrix).round(3))
+    
+    # Hitung konsistensi untuk setiap bound
+    def calculate_consistency_for_matrix(matrix_bound, bound_name):
+        eigenvalues = np.linalg.eigvals(matrix_bound)
+        lambda_max = max(eigenvalues.real)  # Ambil bagian real dari eigenvalue
+        
+        if mat_len >= 10:
+            ri_value = RI[10]
+        else:
+            ri_value = RI[mat_len] if mat_len in RI else 0
+        
+        ci_value = (lambda_max - mat_len) / (mat_len - 1) if mat_len > 1 else 0
+        cr_value = ci_value / ri_value if ri_value > 0 else 0
+        
+        return {
+            'lambda_max': lambda_max,
+            'CI': ci_value,
+            'RI': ri_value,
+            'CR': cr_value,
+            'consistent': cr_value <= 0.1
+        }
+    
+    # Hitung konsistensi untuk setiap bound
+    lower_result = calculate_consistency_for_matrix(lower_matrix, "Lower")
+    middle_result = calculate_consistency_for_matrix(middle_matrix, "Middle")
+    upper_result = calculate_consistency_for_matrix(upper_matrix, "Upper")
+    
+    # Implementasi Geometric Consistency Index (GCI) untuk TFN
+    def calculate_geometric_consistency():
+        """Hitung GCI menggunakan geometric mean dari TFN"""
+        gci_values = []
+        
+        for bound_matrix, bound_name in [(lower_matrix, "Lower"), (middle_matrix, "Middle"), (upper_matrix, "Upper")]:
+            if mat_len <= 2:
+                gci_values.append(0)
+                continue
+                
+            # Hitung geometric mean untuk setiap baris
+            row_gm = []
+            for i in range(mat_len):
+                product = 1
+                for j in range(mat_len):
+                    product *= bound_matrix[i][j]
+                row_gm.append(product ** (1/mat_len))
+            
+            # Hitung GCI
+            gci_sum = 0
+            for i in range(mat_len):
+                for j in range(mat_len):
+                    if i != j:
+                        gci_sum += (np.log(bound_matrix[i][j]) - np.log(row_gm[i]) + np.log(row_gm[j])) ** 2
+            
+            gci = (1 / (2 * (mat_len - 1) * (mat_len - 2))) * gci_sum if mat_len > 2 else 0
+            gci_values.append(gci)
+        
+        return gci_values
+    
+    gci_values = calculate_geometric_consistency()
+    
+    # Fuzzy Consistency Assessment menggunakan defuzzification
+    def fuzzy_defuzzification_cr():
+        """Hitung CR menggunakan defuzzification (centroid method)"""
+        # Defuzzify menggunakan centroid method: (l + m + u) / 3
+        defuzz_matrix = np.zeros((mat_len, mat_len))
+        for i in range(mat_len):
+            for j in range(mat_len):
+                l, m, u = matrix[i][j]
+                defuzz_matrix[i][j] = (l + m + u) / 3
+        
+        eigenvalues = np.linalg.eigvals(defuzz_matrix)
+        lambda_max = max(eigenvalues.real)
+        
+        ri_value = RI[mat_len] if mat_len in RI else RI[10] if mat_len >= 10 else 0
+        ci_value = (lambda_max - mat_len) / (mat_len - 1) if mat_len > 1 else 0
+        cr_value = ci_value / ri_value if ri_value > 0 else 0
+        
+        return {
+            'lambda_max': lambda_max,
+            'CI': ci_value,
+            'RI': ri_value,
+            'CR': cr_value,
+            'consistent': cr_value <= 0.1
+        }
+    
+    defuzz_result = fuzzy_defuzzification_cr()
+    
+    # Overall consistency assessment
+    bounds_consistent = [lower_result['consistent'], middle_result['consistent'], upper_result['consistent']]
+    overall_consistent = all(bounds_consistent) or defuzz_result['consistent']
+    
+    if printComp:
+        st.markdown("#### 📊 **Hasil Analisis Konsistensi TFN:**")
+        
+        # Tabel hasil konsistensi
+        consistency_df = pd.DataFrame({
+            'Bound': ['Lower (L)', 'Middle (M)', 'Upper (U)', 'Defuzzified'],
+            'λ_max': [lower_result['lambda_max'], middle_result['lambda_max'], 
+                     upper_result['lambda_max'], defuzz_result['lambda_max']],
+            'CI': [lower_result['CI'], middle_result['CI'], 
+                   upper_result['CI'], defuzz_result['CI']],
+            'RI': [lower_result['RI'], middle_result['RI'], 
+                   upper_result['RI'], defuzz_result['RI']],
+            'CR': [lower_result['CR'], middle_result['CR'], 
+                   upper_result['CR'], defuzz_result['CR']],
+            'Status': ['✅ Konsisten' if lower_result['consistent'] else '❌ Tidak Konsisten',
+                      '✅ Konsisten' if middle_result['consistent'] else '❌ Tidak Konsisten',
+                      '✅ Konsisten' if upper_result['consistent'] else '❌ Tidak Konsisten',
+                      '✅ Konsisten' if defuzz_result['consistent'] else '❌ Tidak Konsisten']
+        })
+        
+        st.dataframe(consistency_df.round(4), use_container_width=True)
+        
+        # GCI Results
+        if any(gci > 0 for gci in gci_values):
+            st.markdown("#### 🎯 **Geometric Consistency Index (GCI):**")
+            gci_df = pd.DataFrame({
+                'Bound': ['Lower (L)', 'Middle (M)', 'Upper (U)'],
+                'GCI': gci_values,
+                'Status': ['✅ Baik' if gci <= 0.31 else '❌ Perlu Revisi' for gci in gci_values]
+            })
+            st.dataframe(gci_df.round(4), use_container_width=True)
+            st.info("💡 **Interpretasi GCI:** ≤ 0.31 = Konsistensi baik, > 0.31 = Perlu revisi")
+        
+        # Overall assessment
+        st.markdown("#### 🏆 **Penilaian Konsistensi Keseluruhan:**")
+        
+        if overall_consistent:
+            st.success("✅ **Matrix TFN KONSISTEN** - Dapat digunakan untuk perhitungan lanjutan")
+        else:
+            st.warning("⚠️ **Matrix TFN TIDAK KONSISTEN** - Disarankan untuk merevisi penilaian")
+        
+        # Detailed explanation
+        with st.expander("🔍 **Penjelasan Detail Metode Konsistensi TFN**"):
+            st.write("""
+            **Metode yang Digunakan:**
+            
+            1. **Bound-wise Consistency:** Mengecek konsistensi pada setiap bound (L, M, U) secara terpisah
+            2. **Defuzzification Consistency:** Menggunakan centroid method untuk defuzzifikasi TFN
+            3. **Geometric Consistency Index (GCI):** Metode alternatif untuk penilaian konsistensi
+            
+            **Kriteria Penilaian:**
+            - **CR ≤ 0.1:** Matrix konsisten
+            - **GCI ≤ 0.31:** Konsistensi geometris baik
+            - **Overall:** Matrix dianggap konsisten jika semua bound konsisten ATAU defuzzified CR ≤ 0.1
+            
+            **Kelebihan Metode TFN:**
+            - Mempertimbangkan ketidakpastian dalam penilaian
+            - Memberikan interval kepercayaan untuk konsistensi
+            - Lebih robust terhadap variasi penilaian subjektif
+            """)
+    
+    return {
+        'lower': lower_result,
+        'middle': middle_result,
+        'upper': upper_result,
+        'defuzzified': defuzz_result,
+        'gci': gci_values,
+        'overall_consistent': overall_consistent,
+        'bounds_consistent': bounds_consistent
+    }
 
-    if mat_len >= 10:
-        RIValue = RI[10]
-    else:
-        RIValue = (lambdaMax - mat_len)/(mat_len-1)
-    st.write("R.I. Value: ", RIValue)
-
-    CIValue = (lambdaMax-mat_len)/(mat_len - 1)
-    st.write("C.I. Value: ", CIValue)
-
-    CRValue = CIValue/RIValue
-    st.write("C.R. Value: ", CRValue)
-
-    if(printComp): st.write("\n")
-    if(CRValue<=0.1):
-        if(printComp): st.write("Matrix reasonably consistent, we could continue")
-        return True
-    else:
-        if(printComp): st.write("Consistency Ratio is greater than 10%, we need to revise the subjective judgment")
-        return False
+def isConsistent(matrix, printComp=True):
+    """
+    Legacy function for backward compatibility - now uses fuzzy consistency check
+    """
+    result = fuzzy_consistency_check(matrix, printComp)
+    return result['overall_consistent']
 
 #Parameter: matrix = Matrix yang akan dihitung konsistensinya, printComp = opsi untuk menampilkan komputasi konsistensi matrix
 def pairwiseComp(matrix, printComp=True):
@@ -119,16 +281,24 @@ def FAHP(crxcr, altxalt, alternativesName, printComp=True, show_criteria_matrix=
         st.markdown("---")
         st.markdown("## 🔍 **TAHAP 1: PENGECEKAN KONSISTENSI MATRIKS**")
         
-        with st.expander("ℹ️ Penjelasan Pengecekan Konsistensi", expanded=False):
+        with st.expander("ℹ️ Penjelasan Pengecekan Konsistensi TFN", expanded=False):
             st.write("""
-            **Tujuan:** Memastikan bahwa matriks perbandingan berpasangan yang dibuat konsisten dan dapat diandalkan.
+            **Tujuan:** Memastikan bahwa matriks perbandingan berpasangan TFN konsisten dan dapat diandalkan.
             
-            **Proses:**
-            1. **Consistency Index (CI)** = (λmax - n) / (n - 1)
-            2. **Consistency Ratio (CR)** = CI / Random Index (RI)
-            3. **Kriteria:** CR ≤ 0.1 = Konsisten, CR > 0.1 = Tidak konsisten
+            **Metode Konsistensi TFN yang Digunakan:**
+            1. **Bound-wise Analysis:** Mengecek konsistensi pada Lower (L), Middle (M), dan Upper (U) bound secara terpisah
+            2. **Defuzzification Method:** Menggunakan centroid method [(L+M+U)/3] untuk defuzzifikasi
+            3. **Geometric Consistency Index (GCI):** Metode alternatif berbasis geometric mean
             
-            **Catatan:** Sistem ini menggunakan nilai tengah (middle value) dari Triangular Fuzzy Numbers untuk pengecekan konsistensi.
+            **Kriteria Penilaian:**
+            - **CR ≤ 0.1:** Matrix konsisten untuk setiap bound
+            - **GCI ≤ 0.31:** Konsistensi geometris baik  
+            - **Overall:** Konsisten jika semua bound konsisten ATAU defuzzified CR ≤ 0.1
+            
+            **Keunggulan Pendekatan TFN:**
+            - Mempertimbangkan ketidakpastian dalam penilaian subjektif
+            - Memberikan interval kepercayaan untuk hasil konsistensi
+            - Lebih robust dan realistis untuk pengambilan keputusan fuzzy
             """)
         
         st.markdown("### 📊 **Konsistensi Matrix Kriteria x Kriteria:**")
