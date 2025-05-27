@@ -299,8 +299,7 @@ def FAHP(crxcr, altxalt, alternativesName, printComp=True, show_criteria_matrix=
         # Membuat DataFrame untuk menampilkan bobot kriteria dengan lebih rapi
         weights_df = pd.DataFrame({
             'Kriteria': criteriaDict,
-            'Bobot': crxcr_weights,
-            'Persentase': [f"{w*100:.2f}%" for w in crxcr_weights]
+            'Bobot': crxcr_weights
         })
         weights_df.index = weights_df.index + 1
         
