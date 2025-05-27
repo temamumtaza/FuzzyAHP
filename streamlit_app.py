@@ -45,7 +45,7 @@ def fuzzy_consistency_check(matrix, printComp=True):
     crisp_matrix = np.array([[tfn[1] for tfn in row] for row in matrix])
     
     if printComp:
-        st.markdown("#### 🔢 **Transformasi TFN ke Crisp Matrix (Alpha-Cut α=1):**")
+        st.markdown("#### 🔢 **Transformasi TFN ke Crisp Matrix:**")
         st.write("**Matrix TFN Original:**")
         
         # Tampilkan matrix TFN dalam format yang mudah dibaca
@@ -127,7 +127,6 @@ def fuzzy_consistency_check(matrix, printComp=True):
         
         # Tabel hasil konsistensi
         consistency_df = pd.DataFrame({
-            'Metode': ['Alpha-Cut (α=1)'],
             'λ_max': [alpha_cut_result['lambda_max']],
             'CI': [alpha_cut_result['CI']],
             'RI': [alpha_cut_result['RI']],
@@ -267,7 +266,7 @@ def FAHP(crxcr, altxalt, alternativesName, printComp=True, show_criteria_matrix=
             st.write("""
             **Tujuan:** Memastikan bahwa matriks perbandingan berpasangan TFN konsisten dan dapat diandalkan.
             
-            **Metode Alpha-Cut (α=1) yang Digunakan:**
+            
             1. **Transformasi TFN ke Crisp:** Menggunakan alpha-cut dengan α=1
                - TFN (l, m, u) → m (nilai tengah/median)
                - Memberikan representasi crisp yang deterministik dari TFN
@@ -276,12 +275,6 @@ def FAHP(crxcr, altxalt, alternativesName, printComp=True, show_criteria_matrix=
                - Consistency Index (CI) = (λmax - n) / (n - 1)
                - Consistency Ratio (CR) = CI / Random Index (RI)
                - Kriteria: CR ≤ 0.1 = Konsisten
-            
-            **Keunggulan Metode Alpha-Cut:**
-            - Sederhana dan mudah dipahami
-            - Komputasi efisien 
-            - Konsisten dengan teori AHP klasik
-            - Memberikan hasil yang deterministik
             
             """)
         
