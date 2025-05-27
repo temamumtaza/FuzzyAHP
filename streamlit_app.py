@@ -136,41 +136,7 @@ def fuzzy_consistency_check(matrix, printComp=True):
         
         st.dataframe(consistency_df.round(4), use_container_width=True)
         
-        # Overall assessment
-        st.markdown("#### 🏆 **Penilaian Konsistensi:**")
-        
-        if alpha_cut_result['consistent']:
-            st.success("✅ **Matrix TFN KONSISTEN** - Dapat digunakan untuk perhitungan lanjutan")
-        else:
-            st.warning("⚠️ **Matrix TFN TIDAK KONSISTEN** - Disarankan untuk merevisi penilaian")
-        
-        # Detailed explanation
-        with st.expander("🔍 **Penjelasan Metode Alpha-Cut untuk Konsistensi TFN**"):
-            st.write("""
-            **Metode Alpha-Cut (α=1):**
-            
-            1. **Transformasi TFN ke Crisp:** Menggunakan alpha-cut dengan α=1
-               - TFN (l, m, u) → m (nilai tengah/median)
-               - Memberikan representasi crisp yang deterministik dari TFN
-            
-            2. **Perhitungan Konsistensi:** Menggunakan metode AHP klasik pada crisp matrix
-               - Consistency Index (CI) = (λmax - n) / (n - 1)
-               - Consistency Ratio (CR) = CI / Random Index (RI)
-               - Kriteria: CR ≤ 0.1 = Konsisten
-            
-            **Kelebihan Metode Alpha-Cut:**
-            - Sederhana dan mudah dipahami
-            - Komputasi efisien 
-            - Konsisten dengan teori AHP klasik
-            - Memberikan hasil yang deterministik
-            
-            **Logic TFN yang Digunakan:**
-            - **(1,1,3):** Sama penting atau elemen diagonal
-            - **(1,3,5):** Sedikit lebih penting 
-            - **(3,5,7):** Lebih penting 
-            - **(5,7,9):** Sangat penting 
-            - **(7,9,9):** Mutlak lebih penting
-            """)
+
     
     return {
         'alpha_cut': alpha_cut_result,
