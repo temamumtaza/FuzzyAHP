@@ -592,7 +592,7 @@ if file_criteria is not None and file_alternatives is not None:
         st.write("""
         **Dua Metode Pengelompokan Tersedia:**
         
-        **1. Alokasi Persentase:**
+        **1. Alokasi:**
         - Berdasarkan kuota dan persentase yang ditetapkan
         - Misalnya: 20% dari 180 mahasiswa terbaik mendapat keringanan 50%
         - Cocok untuk budget/kuota yang sudah ditentukan
@@ -603,13 +603,13 @@ if file_criteria is not None and file_alternatives is not None:
         - Cocok untuk standar kualitas yang sudah ditetapkan
         """)
     
-    pengelompokan_option = st.radio("🎯 **Pilih Metode Pengelompokan:**", ("Alokasi Persentase", "Batas Skor"))
+    pengelompokan_option = st.radio("🎯 **Pilih Metode Pengelompokan:**", ("Alokasi", "Batas Skor"))
 
-    # Jika opsi yang dipilih adalah Alokasi Persentase
-    if pengelompokan_option == "Alokasi Persentase":
-        st.markdown("### 📊 **Metode: Alokasi Persentase**")
+    # Jika opsi yang dipilih adalah Alokasi
+    if pengelompokan_option == "Alokasi":
+        st.markdown("### 📊 **Metode: Alokasi**")
         
-        with st.expander("💡 Cara Kerja Alokasi Persentase", expanded=False):
+        with st.expander("💡 Cara Kerja Alokasi", expanded=False):
             st.write("""
             **Proses:**
             1. Tentukan total kuota mahasiswa yang berhak mendapat keringanan
@@ -639,7 +639,7 @@ if file_criteria is not None and file_alternatives is not None:
                 st.metric("📊 **Persentase dari Total**", f"{kuota_pengaju/len(output)*100:.1f}%")
 
         # Tambahkan widget untuk memungkinkan pengguna mengatur alokasi persentase untuk masing-masing kelompok
-        st.markdown("#### 🎯 **Alokasi Persentase Keringanan**")
+        st.markdown("#### 🎯 **Alokasi Keringanan**")
         
         col1, col2, col3 = st.columns(3)
         
