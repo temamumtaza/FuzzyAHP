@@ -279,7 +279,7 @@ def FAHP(crxcr, altxalt, alternativesName, printComp=True, show_criteria_matrix=
             **Tujuan:** Menghitung bobot (prioritas) setiap kriteria berdasarkan matriks perbandingan berpasangan.
             
             **Metode Fuzzy Geometric Mean:**
-            1. **Fuzzy Geometric Mean** = ∜(a₁₁ × a₁₂ × ... × a₁ₙ) untuk setiap baris
+            1. **Fuzzy Geometric Mean** = ⁿ√(a₁₁ × a₁₂ × ... × a₁ₙ) untuk setiap baris
             2. **Fuzzy Weight** = Fuzzy Geometric Mean / Σ(Fuzzy Geometric Mean)
             3. **Normalisasi** untuk mendapatkan bobot akhir
             
@@ -497,10 +497,10 @@ def display_criteria_pairwise_matrix(crxcr, criteriaDict):
         
         st.write("**Logic TFN yang Digunakan:**")
         st.write("- **(1, 1, 3):** Elemen diagonal atau sama penting")
-        st.write("- **(1, 3, 5):** Sedikit lebih penting (selisih nilai = 1)")
-        st.write("- **(3, 5, 7):** Lebih penting (selisih nilai = 2)")
-        st.write("- **(5, 7, 9):** Sangat penting (selisih nilai = 3)")
-        st.write("- **(7, 9, 9):** Mutlak lebih penting (selisih nilai ≥ 4)")
+        st.write("- **(1, 3, 5):** Sedikit lebih penting")
+        st.write("- **(3, 5, 7):** Lebih penting")
+        st.write("- **(5, 7, 9):** Sangat penting")
+        st.write("- **(7, 9, 9):** Mutlak lebih penting")
 
 st.title("Fuzzy AHP untuk Seleksi Keringanan UKT")
 
@@ -556,7 +556,7 @@ if file_criteria is not None and file_alternatives is not None:
     altxalt = np.stack([globals()[f"altxalt_cr{i+1}"] for i in range(len(criteriaDict))])
 
     # Membuat checkbox untuk menampilkan perhitungan lengkap (termasuk matrix pairwise dan konsistensi)
-    show_comp = st.checkbox("🔍 Tampilkan Detail Perhitungan Fuzzy AHP (termasuk Matrix Pairwise)")
+    show_comp = st.checkbox("🔍 Tampilkan Detail Perhitungan Fuzzy AHP")
 
     #Memanggil fungsi FAHP dengan parameter yang telah didefinisikan sebelumnya
     output = FAHP(crxcr, altxalt, alternativesName, show_comp, show_comp, criteriaDict)
