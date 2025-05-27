@@ -75,6 +75,8 @@ def fuzzy_consistency_check(matrix, printComp=True):
                 st.warning("⚠️ Matrix memiliki diagonal yang tidak valid")
             return {
                 'lambda_max': mat_len,
+                'eigenvalues': [],
+                'row_eigenvalues': [],
                 'CI': 0,
                 'RI': 0,
                 'CR': 0,
@@ -95,10 +97,40 @@ def fuzzy_consistency_check(matrix, printComp=True):
             # Pastikan lambda_max >= n (properti fundamental dari matriks pairwise comparison)
             lambda_max = max(lambda_max, mat_len)
             
+            # Hitung eigenvalue untuk setiap baris (metode alternatif untuk validasi)
+            # Menggunakan pendekatan: (A × w) / w dimana w adalah eigenvector principal
+            try:
+                # Cari eigenvector yang sesuai dengan eigenvalue maksimum
+                eigenvals, eigenvects = np.linalg.eig(crisp_matrix)
+                # Ambil eigenvector dengan eigenvalue terbesar
+                max_eigenval_idx = np.argmax(eigenvals.real)
+                principal_eigenvector = eigenvects[:, max_eigenval_idx].real
+                
+                # Normalisasi eigenvector agar positif
+                if np.sum(principal_eigenvector) < 0:
+                    principal_eigenvector = -principal_eigenvector
+                
+                # Hitung lambda untuk setiap baris: (A × w)_i / w_i
+                row_eigenvalues = []
+                matrix_times_eigenvector = np.dot(crisp_matrix, principal_eigenvector)
+                
+                for i in range(mat_len):
+                    if abs(principal_eigenvector[i]) > 1e-10:  # Hindari pembagian dengan nol
+                        row_lambda = matrix_times_eigenvector[i] / principal_eigenvector[i]
+                        row_eigenvalues.append(row_lambda)
+                    else:
+                        row_eigenvalues.append(lambda_max)
+                
+            except Exception as e:
+                # Jika gagal, gunakan nilai lambda_max untuk semua baris
+                row_eigenvalues = [lambda_max] * mat_len
+            
         except np.linalg.LinAlgError:
             if printComp:
                 st.warning("⚠️ Error perhitungan eigenvalue untuk crisp matrix")
             lambda_max = mat_len
+            eigenvalues = []
+            row_eigenvalues = [mat_len] * mat_len
         
         if mat_len >= 10:
             ri_value = RI[10]
@@ -110,6 +142,8 @@ def fuzzy_consistency_check(matrix, printComp=True):
         
         return {
             'lambda_max': lambda_max,
+            'eigenvalues': eigenvalues,
+            'row_eigenvalues': row_eigenvalues,
             'CI': ci_value,
             'RI': ri_value,
             'CR': cr_value,
@@ -121,6 +155,51 @@ def fuzzy_consistency_check(matrix, printComp=True):
     
     if printComp:
         st.markdown("#### 📊 **Hasil Analisis Konsistensi (Alpha-Cut Method):**")
+        
+        # Tampilkan detail eigenvalue
+        if len(alpha_cut_result.get('eigenvalues', [])) > 0:
+            st.markdown("##### 🔍 **Detail Eigenvalues Matrix:**")
+            
+            # Tampilkan semua eigenvalues
+            eigenvals_real = [ev.real for ev in alpha_cut_result['eigenvalues']]
+            eigenvals_df = pd.DataFrame({
+                'Index': [f'λ_{i+1}' for i in range(len(eigenvals_real))],
+                'Eigenvalue': eigenvals_real
+            })
+            st.dataframe(eigenvals_df.round(6), use_container_width=True)
+            
+            st.info(f"🎯 **λ_max = {alpha_cut_result['lambda_max']:.6f}** (eigenvalue maksimum)")
+        
+        # Tampilkan eigenvalue per baris
+        if len(alpha_cut_result.get('row_eigenvalues', [])) > 0:
+            st.markdown("##### 📋 **Eigenvalue per Baris Matrix (λ_i = (A×w)_i / w_i):**")
+            
+            row_eigenvals_df = pd.DataFrame({
+                'Baris': [f'Baris {i+1}' for i in range(len(alpha_cut_result['row_eigenvalues']))],
+                'λ_i': alpha_cut_result['row_eigenvalues']
+            })
+            st.dataframe(row_eigenvals_df.round(6), use_container_width=True)
+            
+            # Hitung rata-rata eigenvalue per baris
+            avg_row_eigenval = np.mean(alpha_cut_result['row_eigenvalues'])
+            st.info(f"📊 **Rata-rata λ_i = {avg_row_eigenval:.6f}** (alternatif perhitungan λ_max)")
+            
+            # Penjelasan metode
+            with st.expander("💡 **Penjelasan Perhitungan λ_max**"):
+                st.write("""
+                **Dua Metode Perhitungan λ_max:**
+                
+                **1. Eigenvalue Maksimum Matrix:**
+                - Menggunakan `np.linalg.eigvals()` untuk mendapatkan semua eigenvalues
+                - λ_max = eigenvalue terbesar dari matrix
+                
+                **2. Perhitungan per Baris (Validasi):**
+                - λ_i = (A × w)_i / w_i
+                - A = matrix crisp, w = principal eigenvector
+                - λ_max ≈ rata-rata dari semua λ_i
+                
+                **Kedua metode harus memberikan hasil yang konsisten!**
+                """)
         
         # Tabel hasil konsistensi
         consistency_df = pd.DataFrame({
