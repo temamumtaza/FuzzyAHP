@@ -120,7 +120,7 @@ def fuzzy_consistency_check(matrix, printComp=True):
     alpha_cut_result = calculate_consistency_alpha_cut()
     
     if printComp:
-        st.markdown("#### 📊 **Hasil Analisis Konsistensi (Alpha-Cut Method):**")
+        st.markdown("#### 📊 **Hasil Analisis Konsistensi:**")
         
 
 
@@ -259,12 +259,16 @@ def FAHP(crxcr, altxalt, alternativesName, printComp=True, show_criteria_matrix=
     if(printComp): st.markdown("### 📊 **Konsistensi Matrix Alternatif x Alternatif:**")
     
     for i, altxalt_cr in enumerate(altxalt):
-        altxalt_cons = isConsistent(altxalt_cr, False)
+        if(printComp):
+            st.markdown(f"#### 📋 **Matrix Alternatif untuk Kriteria '{criteriaDict[i]}':**")
+        
+        # Tampilkan detail perhitungan konsistensi untuk setiap matrix alternatif
+        altxalt_cons = isConsistent(altxalt_cr, printComp)
         if(printComp):
             if(altxalt_cons):
-                st.success(f"✅ Matrix alternatif untuk kriteria '{criteriaDict[i]}' konsisten")
+                st.success(f"✅ Matrix alternatif untuk kriteria '{criteriaDict[i]}' konsisten (CR ≤ 0.1). Perhitungan dapat dilanjutkan.")
             else: 
-                st.warning(f"⚠️ Matrix alternatif untuk kriteria '{criteriaDict[i]}' tidak konsisten")
+                st.warning(f"⚠️ Matrix alternatif untuk kriteria '{criteriaDict[i]}' tidak konsisten (CR > 0.1). Namun perhitungan tetap dilanjutkan.")
 
     if(printComp): 
         st.markdown("---")
