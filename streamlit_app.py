@@ -75,8 +75,6 @@ def fuzzy_consistency_check(matrix, printComp=True):
                 st.warning("⚠️ Matrix memiliki diagonal yang tidak valid")
             return {
                 'lambda_max': mat_len,
-                'eigenvalues': [],
-                'row_eigenvalues': [],
                 'CI': 0,
                 'RI': 0,
                 'CR': 0,
@@ -97,15 +95,10 @@ def fuzzy_consistency_check(matrix, printComp=True):
             # Pastikan lambda_max >= n (properti fundamental dari matriks pairwise comparison)
             lambda_max = max(lambda_max, mat_len)
             
-            # Tidak perlu hitung eigenvalue per baris karena tidak ditampilkan
-            row_eigenvalues = []
-            
         except np.linalg.LinAlgError:
             if printComp:
                 st.warning("⚠️ Error perhitungan eigenvalue untuk crisp matrix")
             lambda_max = mat_len
-            eigenvalues = []
-            row_eigenvalues = []
         
         if mat_len >= 10:
             ri_value = RI[10]
@@ -117,8 +110,6 @@ def fuzzy_consistency_check(matrix, printComp=True):
         
         return {
             'lambda_max': lambda_max,
-            'eigenvalues': eigenvalues,
-            'row_eigenvalues': row_eigenvalues,
             'CI': ci_value,
             'RI': ri_value,
             'CR': cr_value,
@@ -131,20 +122,7 @@ def fuzzy_consistency_check(matrix, printComp=True):
     if printComp:
         st.markdown("#### 📊 **Hasil Analisis Konsistensi (Alpha-Cut Method):**")
         
-        # Tampilkan detail eigenvalue
-        if len(alpha_cut_result.get('eigenvalues', [])) > 0:
-            st.markdown("##### 🔍 **Detail Eigenvalues Matrix:**")
-            
-            # Tampilkan semua eigenvalues
-            eigenvals_real = [ev.real for ev in alpha_cut_result['eigenvalues']]
-            eigenvals_df = pd.DataFrame({
-                'Index': [f'λ_{i+1}' for i in range(len(eigenvals_real))],
-                'Eigenvalue': eigenvals_real
-            })
-            st.dataframe(eigenvals_df.round(6), use_container_width=True)
-            
-            st.info(f"🎯 **λ_max = {alpha_cut_result['lambda_max']:.6f}** (eigenvalue maksimum)")
-        
+
 
         
         # Tabel hasil konsistensi
