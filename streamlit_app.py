@@ -180,9 +180,9 @@ def isConsistent(matrix, printComp=True):
     """
     Legacy function for backward compatibility - now uses fuzzy consistency check
     """
-    # Gunakan printComp=False untuk menghindari duplikasi tampilan
-    # Karena pesan konsistensi akan ditampilkan di fungsi FAHP()
-    result = fuzzy_consistency_check(matrix, printComp=False)
+    # Teruskan parameter printComp ke fuzzy_consistency_check
+    # Akan menampilkan detail perhitungan jika printComp=True
+    result = fuzzy_consistency_check(matrix, printComp)
     return result['overall_consistent']
 
 #Parameter: matrix = Matrix yang akan dihitung konsistensinya, printComp = opsi untuk menampilkan komputasi konsistensi matrix
@@ -284,6 +284,7 @@ def FAHP(crxcr, altxalt, alternativesName, printComp=True, show_criteria_matrix=
         
         st.markdown("### 📊 **Konsistensi Matrix Kriteria x Kriteria:**")
     
+    # Tampilkan detail perhitungan konsistensi untuk matrix kriteria jika printComp=True
     crxcr_cons = isConsistent(crxcr, printComp)
     if(crxcr_cons):
         if(printComp): 

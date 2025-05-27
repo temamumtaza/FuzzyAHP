@@ -18,7 +18,7 @@
 
 ## 📋 Deskripsi
 
-Aplikasi **Fuzzy AHP untuk Seleksi Keringanan UKT** adalah sistem pendukung keputusan berbasis web yang dirancang untuk membantu institusi pendidikan dalam proses seleksi penerima keringanan Uang Kuliah Tunggal (UKT). Aplikasi ini menggunakan metode **Fuzzy Analytic Hierarchy Process (FAHP)** dengan implementasi **Alpha-Cut Consistency Checking** yang robust dan sesuai standar akademik.
+Aplikasi **Fuzzy AHP untuk Seleksi Keringanan UKT** adalah sistem pendukung keputusan berbasis web yang dirancang untuk membantu institusi pendidikan dalam proses seleksi penerima keringanan Uang Kuliah Tunggal (UKT). Aplikasi ini menggunakan metode **Fuzzy Analytic Hierarchy Process (FAHP).**
 
 ### 🎯 Tujuan Aplikasi
 - Memberikan objektivitas dalam proses seleksi keringanan UKT
@@ -31,7 +31,6 @@ Aplikasi **Fuzzy AHP untuk Seleksi Keringanan UKT** adalah sistem pendukung kepu
 ## ✨ Fitur Utama
 
 ### 🔍 **Advanced Fuzzy AHP Implementation**
-- **Alpha-Cut Consistency Method** - Transformasi TFN ke crisp matrix dengan α=1
 - **Triangular Fuzzy Numbers (TFN)** - Representasi ketidakpastian dalam penilaian
 - **Robust Consistency Checking** - Validasi matrix dengan Consistency Ratio (CR ≤ 0.1)
 - **Automated Matrix Generation** - Pembentukan matrix pairwise otomatis dari data input
@@ -253,11 +252,11 @@ Proyek ini dilisensikan under [MIT License](LICENSE) - lihat file LICENSE untuk 
 
 ---
 
-## 👥 Tim Pengembang
+## 👥 Pengembang
 
 <div align="center">
 
-**Dikembangkan dengan ❤️ oleh Tim Fuzzy AHP**
+**Dikembangkan dengan ❤️ oleh Tema Mumtaza**
 
 [![GitHub](https://img.shields.io/badge/GitHub-temamumtaza-181717?style=for-the-badge&logo=github)](https://github.com/temamumtaza)
 
