@@ -24,13 +24,14 @@ def read_excel_file(filename, n):
 #     b64 = base64.b64encode(processed_data)
 #     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}">Download file</a>'
 
-def fuzzy_consistency_check(matrix, printComp=True):
+def fuzzy_consistency_check(matrix, printComp=True, showTransformation=True):
     """
     Pengecekan konsistensi untuk Triangular Fuzzy Numbers (TFN) menggunakan metode Alpha-Cut
     
     Parameters:
     matrix: array of TFN - Matrix perbandingan berpasangan dalam format TFN [(l,m,u)]
     printComp: bool - Opsi untuk menampilkan detail perhitungan
+    showTransformation: bool - Opsi untuk menampilkan detail transformasi TFN ke crisp
     
     Returns:
     dict: Contains consistency results using alpha-cut method (alpha=1)
@@ -44,7 +45,7 @@ def fuzzy_consistency_check(matrix, printComp=True):
     # Metode Alpha-Cut dengan alpha = 1: ambil nilai tengah (m) dari TFN (l, m, u)
     crisp_matrix = np.array([[tfn[1] for tfn in row] for row in matrix])
     
-    if printComp:
+    if printComp and showTransformation:
         st.markdown("#### 🔢 **Transformasi TFN ke Crisp Matrix:**")
         st.write("**Matrix TFN Original:**")
         
@@ -144,13 +145,12 @@ def fuzzy_consistency_check(matrix, printComp=True):
         'crisp_matrix': crisp_matrix
     }
 
-def isConsistent(matrix, printComp=True):
+def isConsistent(matrix, printComp=True, showTransformation=True):
     """
     Legacy function for backward compatibility - now uses fuzzy consistency check
     """
-    # Teruskan parameter printComp ke fuzzy_consistency_check
-    # Akan menampilkan detail perhitungan jika printComp=True
-    result = fuzzy_consistency_check(matrix, printComp)
+    # Teruskan parameter printComp dan showTransformation ke fuzzy_consistency_check
+    result = fuzzy_consistency_check(matrix, printComp, showTransformation)
     return result['overall_consistent']
 
 #Parameter: matrix = Matrix yang akan dihitung konsistensinya, printComp = opsi untuk menampilkan komputasi konsistensi matrix
@@ -262,8 +262,8 @@ def FAHP(crxcr, altxalt, alternativesName, printComp=True, show_criteria_matrix=
         if(printComp):
             st.markdown(f"#### 📋 **Matrix Alternatif untuk Kriteria '{criteriaDict[i]}':**")
         
-        # Tampilkan detail perhitungan konsistensi untuk setiap matrix alternatif
-        altxalt_cons = isConsistent(altxalt_cr, printComp)
+        # Tampilkan detail perhitungan konsistensi untuk setiap matrix alternatif (tanpa transformasi)
+        altxalt_cons = isConsistent(altxalt_cr, printComp, showTransformation=False)
         if(printComp):
             if(altxalt_cons):
                 st.success(f"✅ Matrix alternatif untuk kriteria '{criteriaDict[i]}' konsisten (CR ≤ 0.1). Perhitungan dapat dilanjutkan.")
